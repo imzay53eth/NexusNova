@@ -961,6 +961,27 @@ async def revokelicense(interaction: discord.Interaction, member: discord.Member
     )
 
 
+@bot.tree.command(name="alllicenses", description="List all staff licenses")
+async def alllicenses(interaction: discord.Interaction):
+    if not is_head(interaction.user):
+        await interaction.response.send_message("Heads only.", ephemeral=True)
+        return
+    rows = db.execute("SELECT * FROM licenses ORDER BY created_at DESC").fetchall()
+    if not rows:
+        await interaction.response.send_message("No licenses found.", ephemeral=True)
+        return
+    embed = discord.Embed(title="📋 All Staff Licenses", color=discord.Color.blue())
+    for row in rows:
+        status = "✅ Active" if row["active"] else "❌ Revoked"
+        user_mention = f"<@{row['user_id']}>"
+        embed.add_field(
+            name=f"{row['license']} — {status}",
+            value=f"Staff: {user_mention}\n+{row['positive']} / -{row['negative']}\nCreated: {row['created_at'][:10]}",
+            inline=False
+        )
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+
 @bot.tree.command(name="verifylicense", description="Verify your staff license and passcode")
 @app_commands.describe(license_code="Your 6-character license", passcode="Your 4-digit passcode")
 async def verifylicense(
