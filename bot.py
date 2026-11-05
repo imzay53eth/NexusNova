@@ -961,7 +961,7 @@ async def revokelicense(interaction: discord.Interaction, member: discord.Member
     )
 
 
-@bot.tree.command(name="alllicenses", description="List all staff licenses")
+@bot.tree.command(name="listlicense", description="List all staff licenses")
 async def alllicenses(interaction: discord.Interaction):
     if not is_head(interaction.user):
         await interaction.response.send_message("Heads only.", ephemeral=True)
