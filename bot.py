@@ -1130,9 +1130,8 @@ async def getlink(interaction: discord.Interaction, name: str):
     if key not in PRIVATE_LINKS:
         await interaction.response.send_message(f"❌ No link named '{name}' found.", ephemeral=True)
         return
-    embed = discord.Embed(title="🔗 Saved Link", color=0x3498db)
-    embed.add_field(name=name, value=PRIVATE_LINKS[key], inline=False)
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(PRIVATE_LINKS[key], ephemeral=True)
+    
 
 @bot.tree.command(name="listlinks", description="List all saved link names")
 async def listlinks(interaction: discord.Interaction):
