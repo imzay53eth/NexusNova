@@ -32,6 +32,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 load_dotenv()
 
+PUBLIC_ANNOUNCEMENT_CHANNEL_ID = 1568146173284327446
 
 VOUCH_CHANNEL_ID = 1568146179915513907
 PRIVATE_LINKS = {}
@@ -214,6 +215,21 @@ async def weekly_report_task():
 async def before_weekly_report():
     await bot.wait_until_ready()
 
+
+@bot.tree.command(name="publicannounce", description="📢 Send a public announcement")
+@discord.app_commands.checks.has_role(HEADS_ROLE_ID)
+async def publicannounce(interaction: discord.Interaction, title: str, message: str):
+    pub_channel = bot.get_channel(ANNOUNCEMENT_CHANNEL_ID)
+    if not pub_channel:
+        await interaction.response.send_message("❌ Announcement channel not found.", ephemeral=True)
+        return
+    
+    embed = discord.Embed(title=f"📢 {title}", description=message, color=0xf1c40f, timestamp=discord.utils.utcnow())
+    embed.set_footer(text=f"Announced by {interaction.user.display_name}")
+    
+    await pub_channel.send(embed=embed)
+    await interaction.response.send_message("✅ Public announcement sent!", ephemeral=True)
+    
 
 @bot.tree.command(name="generatereport", description="Generate weekly report now (Heads only)")
 async def generatereport(interaction: discord.Interaction):
