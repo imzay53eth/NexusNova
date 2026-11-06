@@ -1334,7 +1334,7 @@ async def unmatt(interaction: discord.Interaction):
 
 
 
-@bot.tree.command(name="attendanceboard", description="📊 Show attendance leaderboard")
+@bot.tree.command(name="attendanceboard", description=" Show attendance leaderboard")
 async def attendanceboard(interaction: discord.Interaction):
     rows = db.execute("""
         SELECT l.user_id, l.license, COALESCE(a.attendance_score, 0) as score
