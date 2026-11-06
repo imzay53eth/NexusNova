@@ -31,6 +31,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 load_dotenv()
+
+
+VOUCH_CHANNEL_ID = 1568146179915513907
+PRIVATE_LINKS = {}
+PRICES = {}
 TOKEN = os.getenv("bot_token")
 HEADS_ROLE_ID = 1568146143643172926
 STAFF_ROLE_ID = 1568146152950464532
@@ -1109,6 +1114,64 @@ async def givepoints(
     await interaction.response.send_message(embed=embed)
     await dm_user(member, embed=embed)
     await audit(interaction.user.id, "Points awarded", member.id, f"{column} +{amount}: {reason}")
+
+
+@bot.tree.command(name="addlink", description="Store a link with a name")
+async def addlink(interaction: discord.Interaction, name: str, url: str):
+    PRIVATE_LINKS[name.lower()] = url
+    embed = discord.Embed(title="✅ Link Saved", color=0x2ecc71)
+    embed.add_field(name="Name", value=name, inline=False)
+    embed.add_field(name="URL", value=url, inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="getlink", description="Retrieve a saved link by name")
+async def getlink(interaction: discord.Interaction, name: str):
+    key = name.lower()
+    if key not in PRIVATE_LINKS:
+        await interaction.response.send_message(f"❌ No link named '{name}' found.", ephemeral=True)
+        return
+    embed = discord.Embed(title="🔗 Saved Link", color=0x3498db)
+    embed.add_field(name=name, value=PRIVATE_LINKS[key], inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="listlinks", description="List all saved link names")
+async def listlinks(interaction: discord.Interaction):
+    if not PRIVATE_LINKS:
+        await interaction.response.send_message("No links saved yet. Use /addlink first.", ephemeral=True)
+        return
+    names_list = "\n".join(f"• {n}" for n in PRIVATE_LINKS.keys())
+    embed = discord.Embed(title="📋 Saved Links", description=names_list, color=0x3498db)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="addprice", description="Add a new price/category")
+async def addprice(interaction: discord.Interaction, category: str, value: str):
+    PRICES[category.lower()] = value
+    embed = discord.Embed(title="✅ Price Added", color=0x2ecc71)
+    embed.add_field(name="Category", value=category, inline=False)
+    embed.add_field(name="Value", value=value, inline=False)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="displayprice", description="Display price for a category")
+async def displayprice(interaction: discord.Interaction, category: str):
+    key = category.lower()
+    if key not in PRICES:
+        await interaction.response.send_message(f"❌ Category '{category}' not found.", ephemeral=True)
+        return
+    embed = discord.Embed(title=f"💰 {category}", color=0xf39c12)
+    embed.add_field(name="Value", value=PRICES[key], inline=False)
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="listprices", description="Show all price categories")
+async def listprices(interaction: discord.Interaction):
+    if not PRICES:
+        await interaction.response.send_message("No prices saved yet. Use /addprice first.", ephemeral=True)
+        return
+    cats = "\n".join(f"• {n}" for n in PRICES.keys())
+    embed = discord.Embed(title="📋 Price Categories", description=cats, color=0xf39c12)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+
+
 @bot.tree.command(name="pointhistory", description="View staff point history")
 @app_commands.describe(member="Staff member")
 async def pointhistory(interaction: discord.Interaction, member: discord.Member = None):
@@ -1369,27 +1432,41 @@ async def on_message(message: discord.Message):
     # Ignore messages from the bot itself
     if message.author == bot.user:
         return
-    
-    # If message is a DM — forward it to staff reviews channel
+
+    # ── ✅ NEW: Auto-Vouch Detection ──
+    if message.channel.id == VOUCH_CHANNEL_ID:
+        mentioned_users = message.mentions.users
+        if mentioned_users:
+            for user in mentioned_users:
+                if user.bot:
+                    continue
+                embed = discord.Embed(title="✅ Vouch Recorded", color=0x2ecc71)
+                embed.set_thumbnail(url=user.display_avatar.url)
+                embed.add_field(name="User", value=f"{user.mention}", inline=False)
+                embed.add_field(name="Action", value="+1 Vouch", inline=False)
+                embed.set_footer(text="Vouch count updated")
+                await message.channel.send(embed=embed)
+
     if isinstance(message.channel, discord.DMChannel):
         staff_channel = bot.get_channel(STAFF_REVIEWS_CHANNEL_ID)
-        if staff_channel and not message.author.bot:
+        if staff_channel and not message.bot:
             embed = discord.Embed(
                 title="📩 Reply from User",
                 description=message.content or "*No text (attachment only)*",
                 color=discord.Color.teal(),
-                timestamp=utcnow()
+                timestamp=iso_now()
             )
             embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url if message.author.avatar else None)
             
             # Add attachments if any
             if message.attachments:
-                file_list = "\n".join(f"- {a.filename}" for a in message.attachments)
+                file_list = "\n".join(f"- `{a.filename}`" for a in message.attachments)
                 embed.add_field(name="Attachments", value=file_list, inline=False)
             
             await staff_channel.send(embed=embed)
-    
+
     await bot.process_commands(message)
+    
 if not TOKEN:
     raise RuntimeError("Set the DISCORD_BOT_TOKEN environment variable.")
 
