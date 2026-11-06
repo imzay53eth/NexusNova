@@ -41,9 +41,9 @@ HEADS_ROLE_ID = 1568146143643172926
 STAFF_ROLE_ID = 1568146152950464532
 LOA_ROLE_ID = 1568159598391730236
 
-STAFF_REVIEWS_CHANNEL_ID = 1568146199309983744
+STAFF_REVIEWS_CHANNEL_ID = 1568146200832774236
 ANNOUNCEMENT_CHANNEL_ID = 1568146190468513853
-BREAK_REQUEST_CHANNEL_ID = 1568146200832774236
+BREAK_REQUEST_CHANNEL_ID = 1568146199309983744
 
 MINIMUM_SHIFT_HOURS = 2.5
 DATABASE_FILE = "staff_database.db"
@@ -1318,28 +1318,65 @@ async def unmatt(interaction: discord.Interaction):
 
 
 
-@bot.tree.command(name="attendanceboard", description="View currently signed-in staff")
+@bot.tree.command(name="attendanceboard", description="📊 Show attendance leaderboard")
 async def attendanceboard(interaction: discord.Interaction):
-    if not is_head(interaction.user):
-        await interaction.response.send_message("Heads only.", ephemeral=True)
-        return
-
-    rows = db.execute("SELECT * FROM attendance ORDER BY sign_in").fetchall()
-    embed = discord.Embed(title="Attendance Dashboard", color=discord.Color.blue())
+    rows = db.execute("""
+        SELECT l.user_id, l.license, COALESCE(a.attendance_score, 0) as score
+        FROM licenses l
+        LEFT JOIN attendance a ON l.user_id = a.user_id
+        WHERE l.active = 1
+        ORDER BY score DESC
+        LIMIT 10
+    """).fetchall()
 
     if not rows:
-        embed.description = "Nobody is currently signed in."
-    else:
-        for row in rows:
-            start = datetime.datetime.fromisoformat(row["sign_in"])
-            hours = (utcnow() - start).total_seconds() / 3600
-            embed.add_field(
-                name=f"Staff: <@{row['user_id']}>",
-                value=f"Signed in: {row['sign_in']}\nHours: {hours:.2f}",
-                inline=False
-            )
+        await interaction.response.send_message("❌ No attendance data found.", ephemeral=True)
+        return
 
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    embed = discord.Embed(title="📊 Attendance Leaderboard", color=0x3498db)
+    board_text = ""
+    for i, row in enumerate(rows, 1):
+        board_text += f"**#{i}** <@{row['user_id']}> — {row['score']}%\n"
+    embed.description = board_text
+    await interaction.response.send_message(embed=embed)
+
+
+@bot.tree.command(name="recentlogins", description="🕒 Who logged in during the past 24 hours")
+async def recentlogins(interaction: discord.Interaction):
+    reviews_channel = bot.get_channel(STAFF_REVIEWS_CHANNEL_ID)
+    if not reviews_channel:
+        await interaction.response.send_message("❌ Reviews channel not found.", ephemeral=True)
+        return
+
+    rows = db.execute("""
+        SELECT DISTINCT user_id, MAX(timestamp) as last_seen
+        FROM attendance
+        WHERE datetime(timestamp) >= datetime('now', '-1 day')
+        GROUP BY user_id
+        ORDER BY last_seen DESC
+    """).fetchall()
+
+    embed = discord.Embed(
+        title="🕒 Recent Activity — Past 24 Hours",
+        color=0x2ecc71,
+        timestamp=discord.utils.utcnow()
+    )
+
+    if not rows:
+        embed.description = "No one has logged in during the past 24 hours."
+    else:
+        desc = ""
+        for idx, row in enumerate(rows, 1):
+            desc += f"**{idx}.** <@{row['user_id']}>\n"
+        embed.description = desc
+
+    await reviews_channel.send(embed=embed)
+    await interaction.response.send_message("✅ Report sent to reviews channel!", ephemeral=True)
+    
+
+
+
+
 @bot.tree.command(name="ann", description="Send a staff announcement")
 @app_commands.choices(announcement_type=[
     app_commands.Choice(name="News", value="news"),
