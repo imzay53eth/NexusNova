@@ -896,7 +896,7 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
 
 
-@bot.tree.command(name="assignlicense", description="Assign a staff license")
+@bot.tree.command(name="givelicense", description="Assign a staff license")
 @app_commands.describe(member="Staff member")
 async def assignlicense(interaction: discord.Interaction, member: discord.Member):
     if not is_head(interaction.user):
@@ -966,7 +966,7 @@ async def revokelicense(interaction: discord.Interaction, member: discord.Member
     )
 
 
-@bot.tree.command(name="listlicense", description="List all staff licenses")
+@bot.tree.command(name="alllicense", description="List all staff licenses")
 async def alllicenses(interaction: discord.Interaction):
     if not is_head(interaction.user):
         await interaction.response.send_message("Heads only.", ephemeral=True)
@@ -1055,7 +1055,7 @@ async def stafflicense(interaction: discord.Interaction, member: discord.Member)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-@bot.tree.command(name="givepoints", description="Give positive or negative staff points")
+@bot.tree.command(name="points", description="Give positive or negative staff points")
 @app_commands.describe(
     member="Staff member",
     point_type="Positive or negative",
@@ -1124,7 +1124,7 @@ async def addlink(interaction: discord.Interaction, name: str, url: str):
     embed.add_field(name="URL", value=url, inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="getlink", description="Retrieve a saved link by name")
+@bot.tree.command(name="link", description="Retrieve a saved link by name")
 async def getlink(interaction: discord.Interaction, name: str):
     key = name.lower()
     if key not in PRIVATE_LINKS:
