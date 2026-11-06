@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "✅ Bot is alive!"
+    return "Bot is alive!"
 
 def run_server():
     app.run(host="0.0.0.0", port=8080)
@@ -224,11 +224,11 @@ async def publicannounce(interaction: discord.Interaction, title: str, message: 
         await interaction.response.send_message("❌ Announcement channel not found.", ephemeral=True)
         return
     
-    embed = discord.Embed(title=f"📢 {title}", description=message, color=0xf1c40f, timestamp=discord.utils.utcnow())
+    embed = discord.Embed(title=f" {title}", description=message, color=0xf1c40f, timestamp=discord.utils.utcnow())
     embed.set_footer(text=f"Announced by {interaction.user.display_name}")
     
     await pub_channel.send(embed=embed)
-    await interaction.response.send_message("✅ Public announcement sent!", ephemeral=True)
+    await interaction.response.send_message("Public announcement sent!", ephemeral=True)
     
 
 @bot.tree.command(name="generatereport", description="Generate weekly report now (Heads only)")
@@ -238,7 +238,7 @@ async def generatereport(interaction: discord.Interaction):
         return
     await interaction.response.defer(ephemeral=True)
     await send_weekly_report()
-    await interaction.followup.send("✅ Weekly report generated!", ephemeral=True)
+    await interaction.followup.send("Weekly report generated!", ephemeral=True)
     await audit(interaction.user.id, "Manual report generated", details="Weekly report run via command")
 
 def iso_now():
@@ -991,9 +991,9 @@ async def alllicenses(interaction: discord.Interaction):
     if not rows:
         await interaction.response.send_message("No licenses found.", ephemeral=True)
         return
-    embed = discord.Embed(title="📋 All Staff Licenses", color=discord.Color.blue())
+    embed = discord.Embed(title=" All Staff Licenses", color=discord.Color.blue())
     for row in rows:
-        status = "✅ Active" if row["active"] else "❌ Revoked"
+        status = " Active" if row["active"] else "❌ Revoked"
         user_mention = f"<@{row['user_id']}>"
         embed.add_field(
             name=f"{row['license']} — {status}",
@@ -1135,7 +1135,7 @@ async def givepoints(
 @bot.tree.command(name="addlink", description="Store a link with a name")
 async def addlink(interaction: discord.Interaction, name: str, url: str):
     PRIVATE_LINKS[name.lower()] = url
-    embed = discord.Embed(title="✅ Link Saved", color=0x2ecc71)
+    embed = discord.Embed(title=" Link Saved", color=0x2ecc71)
     embed.add_field(name="Name", value=name, inline=False)
     embed.add_field(name="URL", value=url, inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1155,13 +1155,13 @@ async def listlinks(interaction: discord.Interaction):
         await interaction.response.send_message("No links saved yet. Use /addlink first.", ephemeral=True)
         return
     names_list = "\n".join(f"• {n}" for n in PRIVATE_LINKS.keys())
-    embed = discord.Embed(title="📋 Saved Links", description=names_list, color=0x3498db)
+    embed = discord.Embed(title=" Saved Links", description=names_list, color=0x3498db)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @bot.tree.command(name="addprice", description="Add a new price/category")
 async def addprice(interaction: discord.Interaction, category: str, value: str):
     PRICES[category.lower()] = value
-    embed = discord.Embed(title="✅ Price Added", color=0x2ecc71)
+    embed = discord.Embed(title=" Price Added", color=0x2ecc71)
     embed.add_field(name="Category", value=category, inline=False)
     embed.add_field(name="Value", value=value, inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1172,7 +1172,7 @@ async def displayprice(interaction: discord.Interaction, category: str):
     if key not in PRICES:
         await interaction.response.send_message(f"❌ Category '{category}' not found.", ephemeral=True)
         return
-    embed = discord.Embed(title=f"💰 {category}", color=0xf39c12)
+    embed = discord.Embed(title=f"{category}", color=0xf39c12)
     embed.add_field(name="Value", value=PRICES[key], inline=False)
     await interaction.response.send_message(embed=embed)
 
@@ -1182,7 +1182,7 @@ async def listprices(interaction: discord.Interaction):
         await interaction.response.send_message("No prices saved yet. Use /addprice first.", ephemeral=True)
         return
     cats = "\n".join(f"• {n}" for n in PRICES.keys())
-    embed = discord.Embed(title="📋 Price Categories", description=cats, color=0xf39c12)
+    embed = discord.Embed(title=" Price Categories", description=cats, color=0xf39c12)
     await interaction.response.send_message(embed=embed, ephemeral=True)
         
 
@@ -1349,7 +1349,7 @@ async def attendanceboard(interaction: discord.Interaction):
         await interaction.response.send_message("❌ No attendance data found.", ephemeral=True)
         return
 
-    embed = discord.Embed(title="📊 Attendance Leaderboard", color=0x3498db)
+    embed = discord.Embed(title=" Attendance Leaderboard", color=0x3498db)
     board_text = ""
     for i, row in enumerate(rows, 1):
         board_text += f"**#{i}** <@{row['user_id']}> — {row['score']}%\n"
@@ -1357,7 +1357,7 @@ async def attendanceboard(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name="recentlogins", description="🕒 Who logged in during the past 24 hours")
+@bot.tree.command(name="recentlogins", description=" Who logged in during the past 24 hours")
 async def recentlogins(interaction: discord.Interaction):
     reviews_channel = bot.get_channel(STAFF_REVIEWS_CHANNEL_ID)
     if not reviews_channel:
@@ -1373,7 +1373,7 @@ async def recentlogins(interaction: discord.Interaction):
     """).fetchall()
 
     embed = discord.Embed(
-        title="🕒 Recent Activity — Past 24 Hours",
+        title=" Recent Activity — Past 24 Hours",
         color=0x2ecc71,
         timestamp=discord.utils.utcnow()
     )
@@ -1481,11 +1481,11 @@ async def before_expire_breaks():
 
 @bot.event
 async def on_message(message: discord.Message):
-    # Ignore messages from the bot itself
+    
     if message.author == bot.user:
         return
 
-    # ── ✅ NEW: Auto-Vouch Detection ──
+    
     if message.channel.id == VOUCH_CHANNEL_ID:
         mentioned_users = message.mentions.users
         if mentioned_users:
@@ -1510,7 +1510,7 @@ async def on_message(message: discord.Message):
             )
             embed.set_author(name=message.author.display_name, icon_url=message.author.avatar.url if message.author.avatar else None)
             
-            # Add attachments if any
+            
             if message.attachments:
                 file_list = "\n".join(f"- `{a.filename}`" for a in message.attachments)
                 embed.add_field(name="Attachments", value=file_list, inline=False)
